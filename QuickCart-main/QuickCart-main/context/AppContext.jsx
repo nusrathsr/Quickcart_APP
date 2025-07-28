@@ -95,8 +95,8 @@ export const AppContextProvider = ({ children }) => {
 
     const data = await response.json();
 
-    if (Array.isArray(data)) {
-      setCartProducts(data);
+    if (Array.isArray(data.products)) {
+      setCartProducts(data.products);
     } else {
       console.error('Invalid response format:', data);
       setCartProducts([]);
