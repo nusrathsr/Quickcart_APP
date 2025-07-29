@@ -1,51 +1,50 @@
-import React from "react";
-import { assets } from "@/assets/assets";
+"use client";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-
-const products = [
-  {
-    id: 1,
-    image: assets.girl_with_headphone_image,
-    title: "Unparalleled Sound",
-    description: "Experience crystal-clear audio with premium headphones.",
-  },
-  {
-    id: 2,
-    image: assets.girl_with_earphone_image,
-    title: "Stay Connected",
-    description: "Compact and stylish earphones for every occasion.",
-  },
-  {
-    id: 3,
-    image: assets.boy_with_laptop_image,
-    title: "Power in Every Pixel",
-    description: "Shop the latest laptops for work, gaming, and more.",
-  },
-];
+import axios from "axios";
 
 const FeaturedProduct = () => {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchMostSoldProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:3001/api/products/most-sold");
+        setProducts(res.data);
+      } catch (error) {
+        console.error("Error fetching most sold products:", error);
+      }
+    };
+    fetchMostSoldProducts();
+  }, []);
+
   return (
-    <div className="mt-14">
+    <div className="mt-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col items-center">
         <p className="text-3xl font-medium">Featured Products</p>
         <div className="w-28 h-0.5 bg-orange-600 mt-2"></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-14 mt-12 md:px-14 px-4">
-        {products.map(({ id, image, title, description }) => (
-          <div key={id} className="relative group">
-            <Image
-              src={image}
-              alt={title}
-              className="group-hover:brightness-75 transition duration-300 w-full h-auto object-cover"
-            />
-            <div className="group-hover:-translate-y-4 transition duration-300 absolute bottom-8 left-8 text-white space-y-2">
-              <p className="font-medium text-xl lg:text-2xl">{title}</p>
-              <p className="text-sm lg:text-base leading-5 max-w-60">
-                {description}
-              </p>
-              <button className="flex items-center gap-1.5 bg-orange-600 px-4 py-2 rounded">
-                Buy now <Image className="h-3 w-3" src={assets.redirect_icon} alt="Redirect Icon" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-14 mt-12">
+        {products.map(({ product }) => (
+          <div
+            key={product._id}
+            className="relative group rounded-lg overflow-hidden shadow-lg"
+          >
+            <div className="relative w-full h-72">
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="group-hover:brightness-75 transition duration-300 object-cover"
+                sizes="(max-width: 768px) 100vw, 400px"
+              />
+            </div>
+            <div className="absolute bottom-6 left-6 right-6 p-4 rounded-lg text-white space-y-2 transform group-hover:-translate-y-4 transition duration-300">
+              <p className="font-semibold text-lg lg:text-xl drop-shadow-md">{product.name}</p>
+              <p className="text-sm lg:text-base drop-shadow-md line-clamp-3">{product.description}</p>
+              <button className="bg-orange-600 px-4 py-2 rounded hover:bg-orange-700 transition">
+                Buy now
               </button>
             </div>
           </div>

@@ -161,6 +161,38 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+app.get('/api/products/most-sold', async (req, res) => {
+  try {
+    const orders = await OrderModel.find().populate('cartItems.product');
+
+    const productSales = {};
+
+    for (let order of orders) {
+      for (let item of order.cartItems) {
+        const productId = item.product._id.toString();
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            product: item.product,
+            totalSold: 0
+          };
+        }
+        productSales[productId].totalSold += item.quantity;
+      }
+    }
+
+    // Convert object to array and sort by totalSold
+    const sortedProducts = Object.values(productSales)
+      .sort((a, b) => b.totalSold - a.totalSold)
+      .slice(0, 8); // top 8 products (you can change this)
+
+    res.json(sortedProducts);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch most sold products' });
+  }
+});
+
+
 app.get('/api/orders/:email', async (req, res) => {
   const { email } = req.params;
 
