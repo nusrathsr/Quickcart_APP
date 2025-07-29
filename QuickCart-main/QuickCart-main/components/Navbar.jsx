@@ -119,10 +119,10 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link href="/" className="hover:text-gray-900 transition no-underline">
+          <Link href="/about" className="hover:text-gray-900 transition no-underline">
             About Us
           </Link>
-          <Link href="/" className="hover:text-gray-900 transition no-underline">
+          <Link href="/contact" className="hover:text-gray-900 transition no-underline">
             Contact
           </Link>
         </div>
