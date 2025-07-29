@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
 
@@ -15,10 +16,10 @@ const Footer = () => {
           />
           <p className="mt-6 text-sm">
             Welcome to QuickCart! We are committed to providing you with the best
-        online shopping experience. Our platform offers a wide range of products
-        across multiple categories, ensuring you find exactly what you need.
-        QuickCart was founded with the vision to simplify online shopping and
-        bring convenience to your fingertips. Thank you for choosing us!
+            online shopping experience. Our platform offers a wide range of products
+            across multiple categories, ensuring you find exactly what you need.
+            QuickCart was founded with the vision to simplify online shopping and
+            bring convenience to your fingertips. Thank you for choosing us!
           </p>
         </div>
 
@@ -26,24 +27,24 @@ const Footer = () => {
           <h2 className="font-medium text-gray-900 mb-5">Company</h2>
           <ul className="text-sm space-y-2">
             <li>
-              <a className="hover:underline transition" href="#">
+              <Link href="/" className="hover:underline transition">
                 Home
-              </a>
+              </Link>
             </li>
             <li>
-              <a className="hover:underline transition" href="#">
+              <Link href="/about" className="hover:underline transition">
                 About us
-              </a>
+              </Link>
             </li>
             <li>
-              <a className="hover:underline transition" href="#">
+              <Link href="/contact" className="hover:underline transition">
                 Contact us
-              </a>
+              </Link>
             </li>
             <li>
-              <a className="hover:underline transition" href="#">
+              <Link href="/privacy-policy" className="hover:underline transition">
                 Privacy policy
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
