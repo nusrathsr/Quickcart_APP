@@ -14,10 +14,11 @@ const Footer = () => {
             alt="logo"
           />
           <p className="mt-6 text-sm">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s, when an unknown printer took a galley of type
-            and scrambled it to make a type specimen book.
+            Welcome to QuickCart! We are committed to providing you with the best
+        online shopping experience. Our platform offers a wide range of products
+        across multiple categories, ensuring you find exactly what you need.
+        QuickCart was founded with the vision to simplify online shopping and
+        bring convenience to your fingertips. Thank you for choosing us!
           </p>
         </div>
 
