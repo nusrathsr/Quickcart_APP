@@ -22,7 +22,7 @@ const AddProduct = ({ onAddSuccess }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('http://localhost:3001/categories')
+        const res = await axios.get('http://localhost:3001/api/categories')
         setCategories(res.data)
       } catch (err) {
         console.error('Failed to fetch categories', err)
