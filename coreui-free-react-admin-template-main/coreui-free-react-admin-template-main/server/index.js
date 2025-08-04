@@ -8,6 +8,8 @@ require('dotenv').config();
 const ProductModel = require('./models/Product')
 const OfferProductModel = require('./models/OfferProduct')
 const CategoryModel = require('./models/Category')
+const MasterCategoryModel = require('./models/MasterCategory');
+const SubCategoryModel = require('./models/SubCategory');
 const UserModel = require('./models/User');
 const OrderModel = require('./models/Order')
 const StatusModel = require('./models/OrderStatus');
@@ -275,6 +277,119 @@ app.delete('/api/categories/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// --- MASTER CATEGORY ROUTES ---
+app.post('/api/master-categories', async (req, res) => {
+  try {
+    const { name, slug, image } = req.body;
+    const newCategory = await MasterCategoryModel.create({ name, slug, image });
+    res.status(201).json(newCategory);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/master-categories', async (req, res) => {
+  try {
+    const categories = await MasterCategoryModel.find();
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/master-categories/:id', async (req, res) => {
+  try {
+    const category = await MasterCategoryModel.findById(req.params.id);
+    if (!category) return res.status(404).json({ message: 'Master Category not found' });
+    res.json(category);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/master-categories/:id', async (req, res) => {
+  try {
+    const { name, image } = req.body;
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+    const updatedCategory = await MasterCategoryModel.findByIdAndUpdate(
+      req.params.id,
+      { name, slug, image },
+      { new: true, runValidators: true }
+    );
+    if (!updatedCategory) return res.status(404).json({ message: 'Master Category not found' });
+    res.json({ message: 'Master Category updated successfully', category: updatedCategory });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+app.delete('/api/master-categories/:id', async (req, res) => {
+  try {
+    await MasterCategoryModel.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Master Category deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- SUBCATEGORY ROUTES ---
+app.post('/api/sub-categories', async (req, res) => {
+  try {
+    const { name, slug, image, masterCategory } = req.body;
+    const newSubCategory = await SubCategoryModel.create({ name, slug, image, masterCategory });
+    res.status(201).json(newSubCategory);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/sub-categories', async (req, res) => {
+  try {
+    const subCategories = await SubCategoryModel.find().populate('masterCategory', 'name');
+    res.json(subCategories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/sub-categories/:id', async (req, res) => {
+  try {
+    const subCategory = await SubCategoryModel.findById(req.params.id).populate('masterCategory', 'name');
+    if (!subCategory) return res.status(404).json({ message: 'Sub Category not found' });
+    res.json(subCategory);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+app.put('/api/sub-categories/:id', async (req, res) => {
+  try {
+    const { name, image, masterCategory } = req.body;
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+    const updatedSubCategory = await SubCategoryModel.findByIdAndUpdate(
+      req.params.id,
+      { name, slug, image, masterCategory },
+      { new: true, runValidators: true }
+    );
+    if (!updatedSubCategory) return res.status(404).json({ message: 'Sub Category not found' });
+    res.json({ message: 'Sub Category updated successfully', subCategory: updatedSubCategory });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/sub-categories/:id', async (req, res) => {
+  try {
+    await SubCategoryModel.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Subcategory deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // --- PRODUCT ROUTES ---
 app.get('/products', async (req, res) => {

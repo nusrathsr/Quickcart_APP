@@ -6,6 +6,12 @@ const EditProduct = React.lazy(() => import('./views/products/EditProduct'))
 const ListOfferProducts = React.lazy(() => import('./views/offer-products/ListOfferProducts'))
 const AddOfferProduct = React.lazy(() => import('./views/offer-products/AddOfferProduct'))
 const EditOfferProduct = React.lazy(() => import('./views/offer-products/EditOfferProduct'))
+const AddMasterCategory = React.lazy(() => import('./views/master-categories/AddMasterCategory'))
+const ViewMasterCategories = React.lazy(() => import('./views/master-categories/ViewMasterCategories'))
+const EditMasterCategory = React.lazy(() => import('./views/master-categories/EditMasterCategory'))
+const AddSubCategory = React.lazy(() => import('./views/sub-categories/AddSubCategory'))
+const ViewSubCategories = React.lazy(() => import('./views/sub-categories/ViewSubCategories'))
+const EditSubCategory = React.lazy(() => import('./views/sub-categories/EditSubCategory'))
 const CreateCategory = React.lazy(() => import('./views/categories/CreateCategory'))
 const ListCategories = React.lazy(() => import('./views/categories/ListCategories'))
 const OrderList = React.lazy(() => import('./views/orders/OrderList'))
@@ -69,6 +75,12 @@ const routes = [
 { path: '/offer-products/edit/:id', name: 'Edit Offer Product', element: <EditOfferProduct /> },
 {path: '/categories/create', name: 'Create Category', element: <CreateCategory />},
 {path: '/categories/list', name: 'List Categories', element: <ListCategories />},
+{ path: '/master-categories/add', name: 'Add Master Category', element: <AddMasterCategory /> },
+{ path: '/master-categories/view', name: 'View Master Categories', element: <ViewMasterCategories /> },
+{ path: '/sub-categories/add', name: 'Add Sub Category', element: <AddSubCategory /> },
+{ path: '/sub-categories/view', name: 'View Sub Categories', element: <ViewSubCategories /> },
+{ path: '/master-categories/edit/:id', name: 'Edit Master Category', element: <EditMasterCategory /> },
+{ path: '/sub-categories/edit/:id', name: 'Edit Sub Category', element: <EditSubCategory /> },
 { path: '/orders/list', name: 'All Orders', element: <OrderList /> },
 //   { path: '/theme', name: 'Theme', element: <Colors /> },
 //   { path: '/theme/colors', name: 'Colors', element: <Colors /> },

@@ -72,19 +72,38 @@ const _nav = [
 
 {
   component: CNavGroup,
-  name: 'Categories',
-  to: '/categories',
+  name: 'Master Categories',
+  to: '/master-categories',
   icon: <CIcon icon={cilListRich} customClassName="nav-icon" />,
   items: [
     {
       component: CNavItem,
-      name: 'Create Category',
-      to: '/categories/create',
+      name: 'Add Master Category',
+      to: '/master-categories/add',
     },
     {
       component: CNavItem,
-      name: 'List Categories',
-      to: '/categories/list',
+      name: 'View Master Categories',
+      to: '/master-categories/view',
+    },
+  ],
+},
+
+{
+  component: CNavGroup,
+  name: 'Sub Categories',
+  to: '/sub-categories',
+  icon: <CIcon icon={cilListRich} customClassName="nav-icon" />,
+  items: [
+    {
+      component: CNavItem,
+      name: 'Add Sub Category',
+      to: '/sub-categories/add',
+    },
+    {
+      component: CNavItem,
+      name: 'View Sub Categories',
+      to: '/sub-categories/view',
     },
   ],
 },
