@@ -1,20 +1,25 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
-import { useRouter } from 'next/navigation';  // <-- import router
+import { useRouter } from "next/navigation";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
 import Link from "next/link";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const Navbar = () => {
-  const router = useRouter();  // <-- get router here
-  const { getCartCount } = useAppContext();  // <-- getCartCount from context
+  const router = useRouter();
+  const { getCartCount } = useAppContext();
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [user, setUser] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // New state for master categories
+  const [masterCategories, setMasterCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const dropdownRef = useRef();
   const accountDropdownRef = useRef();
@@ -24,21 +29,39 @@ const Navbar = () => {
     setUser(storedUser ? JSON.parse(storedUser) : null);
   }, []);
 
+  // Fetch master categories from backend on mount
+  useEffect(() => {
+    const fetchMasterCategories = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/api/master-categories");
+        if (!res.ok) throw new Error("Failed to fetch categories");
+        const data = await res.json();
+        setMasterCategories(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchMasterCategories();
+  }, []);
+
   const handleLogout = () => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: 'You will be logged out.',
-      icon: 'warning',
+      title: "Are you sure?",
+      text: "You will be logged out.",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, logout'
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, logout",
     }).then((result) => {
       if (result.isConfirmed) {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         setUser(null);
-        Swal.fire('Logged out!', 'You have been logged out.', 'success').then(() => {
+        Swal.fire("Logged out!", "You have been logged out.", "success").then(() => {
           router.push("/login");
         });
       }
@@ -95,26 +118,23 @@ const Navbar = () => {
               Categories ▾
             </button>
             {showDropdown && (
-              <div className="absolute bg-white shadow-lg mt-2 rounded z-50">
-                {[
-                  { name: "Furniture", slug: "furniture" },
-                  { name: "Beauty and Health", slug: "beauty-and-health" },
-                  { name: "Smartphones", slug: "smartphones" },
-                  { name: "Men's Fashion", slug: "men's-fashion" },
-                  { name: "Women's Fashion", slug: "women's-fashion" },
-                  { name: "Groceries", slug: "groceries" },
-                  { name: "Kitchen Appliances", slug: "kitchen-appliances" },
-                  { name: "Pet Supplies", slug: "pet-supplies" },
-                ].map((cat) => (
-                  <Link
-                    key={cat.slug}
-                    href={`/category/${cat.slug}`}
-                    className="block px-4 py-2 hover:bg-gray-100 whitespace-nowrap no-underline"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
+              <div className="absolute bg-white shadow-lg mt-2 rounded z-50 min-w-[180px]">
+                {loadingCategories ? (
+                  <div className="px-4 py-2">Loading...</div>
+                ) : masterCategories.length === 0 ? (
+                  <div className="px-4 py-2">No categories found</div>
+                ) : (
+                  masterCategories.map((cat) => (
+                    <Link
+                      key={cat.slug}
+                      href={`/categories/master/${cat.slug}`}
+                      className="block px-4 py-2 hover:bg-gray-100 whitespace-nowrap no-underline"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      {cat.name}
+                    </Link>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -181,7 +201,6 @@ const Navbar = () => {
               )}
             </div>
           )}
-
         </div>
       </nav>
 

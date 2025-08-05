@@ -84,7 +84,7 @@ export const AppContextProvider = ({ children }) => {
     const ids = validIds.join(',');
 
     setLoadingCartProducts(true);
-    const response = await fetch(`http://localhost:3001/products/by-ids?ids=${ids}`);
+    const response = await fetch(`http://localhost:3001/api/products/by-ids?ids=${ids}`);
 
     if (!response.ok) {
       const errData = await response.json();

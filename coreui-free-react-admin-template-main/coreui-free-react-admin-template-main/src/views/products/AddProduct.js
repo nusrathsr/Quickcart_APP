@@ -3,33 +3,61 @@ import axios from 'axios'
 import { Form, Button } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 
-const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dy1sluo6i/upload' // your cloud name
-const UPLOAD_PRESET = 'new_unsigned_preset' // your unsigned preset
+const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dy1sluo6i/upload'
+const UPLOAD_PRESET = 'new_unsigned_preset'
 
 const AddProduct = ({ onAddSuccess }) => {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [quantity, setQuantity] = useState('')
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState('')
   const [file, setFile] = useState(null)
-  const [categoryId, setCategoryId] = useState('')
-  const [categories, setCategories] = useState([])
+
+  // For categories
+  const [masterCategories, setMasterCategories] = useState([])
+  const [selectedMasterCategory, setSelectedMasterCategory] = useState('')
+  const [subCategories, setSubCategories] = useState([])
+  const [selectedSubCategory, setSelectedSubCategory] = useState('')
+
   const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
 
-  // Fetch categories on mount
+  // Fetch master categories on mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchMasterCategories = async () => {
       try {
-        const res = await axios.get('http://localhost:3001/api/categories')
-        setCategories(res.data)
+        const res = await axios.get('http://localhost:3001/api/master-categories')
+        setMasterCategories(res.data)
       } catch (err) {
-        console.error('Failed to fetch categories', err)
+        console.error('Failed to fetch master categories', err)
       }
     }
-    fetchCategories()
+    fetchMasterCategories()
   }, [])
+
+  // Fetch subcategories when master category changes
+  useEffect(() => {
+    if (!selectedMasterCategory) {
+      setSubCategories([])
+      setSelectedSubCategory('')
+      return
+    }
+
+    const fetchSubCategories = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:3001/api/sub-categories?masterCategoryId=${selectedMasterCategory}`
+        )
+        setSubCategories(res.data)
+        setSelectedSubCategory('') // reset subcategory selection
+      } catch (err) {
+        console.error('Failed to fetch subcategories', err)
+      }
+    }
+
+    fetchSubCategories()
+  }, [selectedMasterCategory])
 
   const uploadImage = async (file) => {
     const formData = new FormData()
@@ -47,8 +75,12 @@ const AddProduct = ({ onAddSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!categoryId) {
-      alert('Please select a category')
+    if (!selectedMasterCategory) {
+      alert('Please select a master category')
+      return
+    }
+    if (!selectedSubCategory) {
+      alert('Please select a subcategory')
       return
     }
 
@@ -66,12 +98,13 @@ const AddProduct = ({ onAddSuccess }) => {
         quantity: Number(quantity),
         description,
         image: imageUrl,
-        category: categoryId,
+        masterCategory: selectedMasterCategory,
+        subCategory: selectedSubCategory,
       }
-      console.log("Description:", description);
-console.log("Sending product data:", productData);
 
-      const response = await axios.post('http://localhost:3001/products', productData)
+      console.log("Sending product data:", productData);
+
+      const response = await axios.post('http://localhost:3001/api/products', productData)
 
       if (response.data) {
         alert('Product added successfully')
@@ -81,7 +114,9 @@ console.log("Sending product data:", productData);
         setQuantity('')
         setDescription('')
         setFile(null)
-        setCategoryId('')
+        setSelectedMasterCategory('')
+        setSubCategories([])
+        setSelectedSubCategory('')
         if (onAddSuccess) onAddSuccess()
       }
     } catch (error) {
@@ -96,7 +131,7 @@ console.log("Sending product data:", productData);
     <div className="container mt-4">
       <h2>Add Product</h2>
       <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="productName">
+        <Form.Group controlId="productName" className="mb-3">
           <Form.Label>Name</Form.Label>
           <Form.Control
             type="text"
@@ -107,7 +142,7 @@ console.log("Sending product data:", productData);
           />
         </Form.Group>
 
-        <Form.Group controlId="productPrice">
+        <Form.Group controlId="productPrice" className="mb-3">
           <Form.Label>Price</Form.Label>
           <Form.Control
             type="number"
@@ -118,7 +153,7 @@ console.log("Sending product data:", productData);
           />
         </Form.Group>
 
-        <Form.Group controlId="productQuantity">
+        <Form.Group controlId="productQuantity" className="mb-3">
           <Form.Label>Quantity</Form.Label>
           <Form.Control
             type="number"
@@ -129,27 +164,27 @@ console.log("Sending product data:", productData);
           />
         </Form.Group>
 
-        <Form.Group controlId="productDescription">
-  <Form.Label>Description</Form.Label>
-  <Form.Control
-    as="textarea"
-    rows={3}
-    placeholder="Enter product description"
-    value={description}
-    onChange={(e) => setDescription(e.target.value)}
-    required
-  />
-</Form.Group>
+        <Form.Group controlId="productDescription" className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            placeholder="Enter product description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </Form.Group>
 
-        <Form.Group controlId="productCategory">
-          <Form.Label>Category</Form.Label>
+        <Form.Group controlId="masterCategory" className="mb-3">
+          <Form.Label>Master Category</Form.Label>
           <Form.Select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+            value={selectedMasterCategory}
+            onChange={(e) => setSelectedMasterCategory(e.target.value)}
             required
           >
-            <option value="">Select category</option>
-            {categories.map((cat) => (
+            <option value="">Select master category</option>
+            {masterCategories.map((cat) => (
               <option key={cat._id} value={cat._id}>
                 {cat.name}
               </option>
@@ -157,7 +192,24 @@ console.log("Sending product data:", productData);
           </Form.Select>
         </Form.Group>
 
-        <Form.Group controlId="productImage">
+        <Form.Group controlId="subCategory" className="mb-3">
+          <Form.Label>Subcategory</Form.Label>
+          <Form.Select
+            value={selectedSubCategory}
+            onChange={(e) => setSelectedSubCategory(e.target.value)}
+            required
+            disabled={!selectedMasterCategory || subCategories.length === 0}
+          >
+            <option value="">Select subcategory</option>
+            {subCategories.map((sub) => (
+              <option key={sub._id} value={sub._id}>
+                {sub.name}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group controlId="productImage" className="mb-3">
           <Form.Label>Image</Form.Label>
           <Form.Control
             type="file"
@@ -167,7 +219,7 @@ console.log("Sending product data:", productData);
           />
         </Form.Group>
 
-        <Button variant="primary" type="submit" disabled={loading} className="mt-3">
+        <Button variant="primary" type="submit" disabled={loading}>
           {loading ? 'Uploading...' : 'Add Product'}
         </Button>
       </Form>

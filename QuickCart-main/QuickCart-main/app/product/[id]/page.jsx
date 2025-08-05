@@ -6,6 +6,7 @@ import Loading from "@/components/Loading";
 import { useAppContext } from "@/context/AppContext";
 import React from "react";
 import { Rate } from "antd";
+import Navbar from "@/components/Navbar";
 
 const Product = () => {
   const { id } = useParams();
@@ -18,9 +19,10 @@ const Product = () => {
   // Fetch product data by id
   const fetchProductData = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/products/${id}`);
+      const res = await fetch(`http://localhost:3001/api/products/${id}`);
       const data = await res.json();
       setProductData(data.product);
+      setMainImage(data.product.image); // default main image
     } catch (err) {
       console.error("Failed to fetch product:", err);
     }
@@ -49,12 +51,14 @@ const Product = () => {
       setShowToast(true);
       return;
     }
-    addToCart(productData._id, 1);
+    addToCart(productData, 1);
     setToastMessage("Product added to cart");
     setShowToast(true);
   };
 
   return (
+    <>
+    <Navbar/>
     <div className="px-6 md:px-16 lg:px-32 pt-14 space-y-10">
       {/* Toast notification */}
       {showToast && (
@@ -113,6 +117,13 @@ const Product = () => {
             {productData.name}
           </h1>
 
+          <div className="text-gray-600 mt-2">
+            <strong>Category:</strong> {productData.masterCategory?.name || "N/A"}
+          </div>
+          <div className="text-gray-600 mb-4">
+            <strong>Subcategory:</strong> {productData.subCategory?.name || "N/A"}
+          </div>
+
           <div className="flex items-center gap-2 mt-2">
             <Rate disabled allowHalf defaultValue={productData.rating || 4.5} />
             <span className="text-gray-600">({productData.rating || 4.5})</span>
@@ -135,6 +146,7 @@ const Product = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

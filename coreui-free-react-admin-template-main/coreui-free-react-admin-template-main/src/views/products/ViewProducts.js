@@ -13,7 +13,7 @@ const ViewProducts = () => {
 
     const fetchProducts = async () => {
         try {
-            const response = await axios.get('http://localhost:3001/products', {
+            const response = await axios.get('http://localhost:3001/api/products', {
                  params: { page, limit, search, category: categorySlug }
             })
             setProducts(response.data.products || [])
@@ -34,7 +34,7 @@ const ViewProducts = () => {
     };
 
     const deleteProduct = async (id) => {
-        await axios.delete('http://localhost:3001/products/' + id)
+        await axios.delete('http://localhost:3001/api/products/' + id)
         fetchProducts()
     }
 

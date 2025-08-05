@@ -28,7 +28,7 @@ const AllProductsPage = () => {
         page: page.toString(),
         limit: "12",
       });
-      const res = await fetch(`http://localhost:3001/products?${query.toString()}`);
+      const res = await fetch(`http://localhost:3001/api/products?${query.toString()}`);
 
       if (!res.ok) {
         // Extract error message from backend if available
@@ -88,7 +88,7 @@ const AllProductsPage = () => {
     setShowToast(true);
     return;
   }
-  addToCart(product);
+  addToCart(product, 1);
   setToastMessage("Product added to cart");
   setShowToast(true);
 };

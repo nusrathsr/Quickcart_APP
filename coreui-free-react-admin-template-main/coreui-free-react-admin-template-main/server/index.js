@@ -166,34 +166,33 @@ app.get('/api/orders', async (req, res) => {
 app.get('/api/products/most-sold', async (req, res) => {
   try {
     const orders = await OrderModel.find().populate('cartItems.product');
-
     const productSales = {};
 
     for (let order of orders) {
       for (let item of order.cartItems) {
+        if (!item.product) continue; // Skip if product is missing
+
         const productId = item.product._id.toString();
         if (!productSales[productId]) {
           productSales[productId] = {
             product: item.product,
-            totalSold: 0
+            totalSold: 0,
           };
         }
         productSales[productId].totalSold += item.quantity;
       }
     }
 
-    // Convert object to array and sort by totalSold
     const sortedProducts = Object.values(productSales)
       .sort((a, b) => b.totalSold - a.totalSold)
-      .slice(0, 8); // top 8 products (you can change this)
+      .slice(0, 8);
 
     res.json(sortedProducts);
   } catch (err) {
-    console.error(err);
+    console.error("Error in /api/products/most-sold:", err.message);
     res.status(500).json({ error: 'Failed to fetch most sold products' });
   }
 });
-
 
 app.get('/api/orders/:email', async (req, res) => {
   const { email } = req.params;
@@ -297,6 +296,15 @@ app.get('/api/master-categories', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get('/api/master-categories/slug/:slug', async (req, res) => {
+  try {
+    const category = await MasterCategoryModel.findOne({ slug: req.params.slug });
+    if (!category) return res.status(404).json({ message: 'Master Category not found' });
+    res.json(category);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.get('/api/master-categories/:id', async (req, res) => {
   try {
@@ -347,12 +355,15 @@ app.post('/api/sub-categories', async (req, res) => {
 
 app.get('/api/sub-categories', async (req, res) => {
   try {
-    const subCategories = await SubCategoryModel.find().populate('masterCategory', 'name');
+    const { masterCategoryId } = req.query;
+    const filter = masterCategoryId ? { masterCategory: masterCategoryId } : {};
+    const subCategories = await SubCategoryModel.find(filter).populate('masterCategory', 'name');
     res.json(subCategories);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 app.get('/api/sub-categories/:id', async (req, res) => {
   try {
@@ -380,6 +391,17 @@ app.put('/api/sub-categories/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get('/api/sub-categories/by-master/:slug', async (req, res) => {
+  try {
+    const masterCategory = await MasterCategoryModel.findOne({ slug: req.params.slug });
+    if (!masterCategory) return res.status(404).json({ message: 'Master Category not found' });
+
+    const subCategories = await SubCategoryModel.find({ masterCategory: masterCategory._id });
+    res.json(subCategories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.delete('/api/sub-categories/:id', async (req, res) => {
   try {
@@ -392,69 +414,168 @@ app.delete('/api/sub-categories/:id', async (req, res) => {
 
 
 // --- PRODUCT ROUTES ---
-app.get('/products', async (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    const { category, search, page = 1, limit = 6, minPrice, maxPrice, sort } = req.query;
+    const { subcategory, masterCategory, search, page = 1, limit = 6, minPrice, maxPrice, sort } = req.query;
     const query = {};
-    if (category) {
-      const categoryDoc = await CategoryModel.findOne({ slug: category });
-      if (!categoryDoc) return res.status(404).json({ message: 'Category not found' });
-      query.category = categoryDoc._id;
+
+    if (subcategory) {
+      const subCatDoc = await SubCategoryModel.findOne({ slug: subcategory });
+      if (!subCatDoc) return res.status(404).json({ message: 'Subcategory not found' });
+      query.subCategory = subCatDoc._id;
     }
+
+    if (masterCategory) {
+      const masterCatDoc = await MasterCategoryModel.findOne({ slug: masterCategory });
+      if (!masterCatDoc) return res.status(404).json({ message: 'Master category not found' });
+      query.masterCategory = masterCatDoc._id;
+    }
+
     if (search) query.name = { $regex: search, $options: 'i' };
+
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice && !isNaN(Number(minPrice))) query.price.$gte = Number(minPrice);
       if (maxPrice && !isNaN(Number(maxPrice))) query.price.$lte = Number(maxPrice);
       if (Object.keys(query.price).length === 0) delete query.price;
     }
+
     const skip = (Number(page) - 1) * Number(limit);
-    let sortOption = {};
-    if (sort === 'asc') sortOption.price = 1;
-    else if (sort === 'desc') sortOption.price = -1;
+    const sortOption = sort === 'asc' ? { price: 1 } : sort === 'desc' ? { price: -1 } : {};
+
     const totalProducts = await ProductModel.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / Number(limit));
-    const products = await ProductModel.find(query).sort(sortOption).skip(skip).limit(Number(limit)).populate('category');
+    const products = await ProductModel.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(Number(limit))
+      .populate('subCategory', 'name slug')
+      .populate('masterCategory', 'name slug');
+
     res.json({ products, totalPages });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.get('/products/by-ids', async (req, res) => {
+
+app.get('/api/products/by-ids', async (req, res) => {
   try {
     const ids = req.query.ids?.split(',') || [];
     const validIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
     if (validIds.length === 0) return res.status(400).json({ message: 'No valid product IDs provided' });
     const products = await ProductModel.find({ _id: { $in: validIds } });
-    res.json({products});
+    res.json({ products });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 });
-
-app.post('/products', async (req, res) => {
+app.post('/api/products', async (req, res) => {
   try {
-    const { name, price, quantity, description, image, category } = req.body;
-    if (!category) return res.status(400).json({ error: "Category is required" });
-    const product = await ProductModel.create({ name, price, quantity, description, image, category });
+    const { name, price, quantity, description, image, masterCategory, subCategory } = req.body;
+
+    if (!subCategory) return res.status(400).json({ error: "Subcategory is required" });
+
+    const product = await ProductModel.create({
+      name,
+      price,
+      quantity,
+      description,
+      image,
+      masterCategory,
+      subCategory
+    });
+
     res.json({ message: "Product created", product });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in POST /products:', err);  // <=== Add this to see full error
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-app.get('/products/:id', async (req, res) => {
+app.get('/api/products/:id', async (req, res) => {
   try {
-    const product = await ProductModel.findById(req.params.id).populate('category');
+    const product = await ProductModel.findById(req.params.id)
+      .populate('masterCategory', 'name slug')
+      .populate('subCategory', 'name slug');
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json({ product });
   } catch (err) {
+    console.error('Error fetching product:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.put('/products/:id', async (req, res) => {
+app.get('/api/products/by-sub/:slug', async (req, res) => {
+  try {
+    const subCategory = await SubCategoryModel.findOne({ slug: req.params.slug });
+    if (!subCategory) return res.status(404).json({ message: 'Subcategory not found' });
+
+    // Find products belonging to this subcategory
+    const products = await ProductModel.find({ subCategory: subCategory._id });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/products/by-master/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { search = '', minPrice = 0, maxPrice = Infinity, sort = 'asc', page = 1, limit = 10 } = req.query;
+
+    // Find the master category by slug
+    const masterCategory = await MasterCategoryModel.findOne({ slug });
+    if (!masterCategory) return res.status(404).json({ message: 'Master Category not found' });
+
+    // Build query
+    const filter = {
+      masterCategory: masterCategory._id,
+      name: { $regex: search, $options: 'i' },
+      price: { $gte: Number(minPrice), $lte: Number(maxPrice) }
+    };
+
+    // Pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch products
+    const products = await ProductModel.find(filter)
+      .sort({ price: sort === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    // Count total for pagination
+    const totalProducts = await ProductModel.countDocuments(filter);
+
+    res.json({
+      products,
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / limit),
+      currentPage: Number(page)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/debug/products/:id', async (req, res) => {
+  try {
+    const product = await ProductModel.findById(req.params.id)
+      .populate('masterCategory', 'name slug')
+      .populate('subCategory', 'name slug');
+
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    res.json({ product });
+  } catch (err) {
+    console.error('Debug fetch product error:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
+app.put('/api/products/:id', async (req, res) => {
   try {
     const updatedProduct = await ProductModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
@@ -464,7 +585,7 @@ app.put('/products/:id', async (req, res) => {
   }
 });
 
-app.delete('/products/:id', async (req, res) => {
+app.delete('/api/products/:id', async (req, res) => {
   try {
     const deletedProduct = await ProductModel.findByIdAndDelete(req.params.id);
     if (!deletedProduct) return res.status(404).json({ message: 'Product not found' });

@@ -22,7 +22,7 @@ const EditProduct = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await axios.get(`http://localhost:3001/products/${id}`)
+                const response = await axios.get(`http://localhost:3001/api/products/${id}`)
                 const { name, price, quantity, description, image } = response.data.product
                 setName(name)
                 setPrice(price)
@@ -70,7 +70,7 @@ const EditProduct = () => {
                 image: imageUrl,
             }
             
-            const response = await axios.put(`http://localhost:3001/products/${id}`, updatedProduct)
+            const response = await axios.put(`http://localhost:3001/api/products/${id}`, updatedProduct)
             alert(response.data.message || 'Product updated successfully')
             navigate('/products/view')
         } catch (err) {
